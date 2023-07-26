@@ -2,7 +2,7 @@
   "name": "mobilenerf-viewer",
   "version": "1.0.0",
   "scripts": {
-    "dev": "http-server src -p 3000"
+    "dev": "http-server src -p 3000 -s"
   },
   "devDependencies": {
     "http-server": "^14.1.1"
