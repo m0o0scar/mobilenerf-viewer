@@ -1,16 +1,60 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>📱 MobileNeRF</title>
+  <title>MobileNeRF</title>
+  <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
 </head>
+
 <body>
-  <article>
-    <h1>Demos</h1>
-    <ul>
-      <li><a href="viewer.html?obj=gardenvase&s=1.0">Gardenvase</a></li>
-    </ul>
+  <article class="prose p-4 max-w-full">
+    <div class="max-w-3xl mx-auto mt-4">
+      <h1>MobileNeRF + WebXR</h1>
+      <h2>Demos</h2>
+      <h3>Unbounded 360° scenes</h3>
+      <div id="demoListUnbounded" class="grid grid-cols-3 sm:grid-cols-4 gap-4"></div>
+      <h3>Forward-facing scenes</h3>
+      <div id="demoListForward" class="grid grid-cols-3 sm:grid-cols-4 gap-4"></div>
+    </div>
   </article>
+
+  <script>
+
+    const containers = {
+      unbounded: document.getElementById('demoListUnbounded'),
+      forward: document.getElementById('demoListForward'),
+    }
+
+    const demos = [
+      { name: 'Bicycle', type: 'unbounded' },
+      { name: 'Gardenvase', type: 'unbounded' },
+      { name: 'Stump', type: 'unbounded' },
+      { name: 'Fern', type: 'forward' },
+      { name: 'Flower', type: 'forward' },
+      { name: 'Fortress', type: 'forward' },
+      { name: 'Horns', type: 'forward' },
+      { name: 'Leaves', type: 'forward' },
+      { name: 'Orchids', type: 'forward' },
+      { name: 'Room', type: 'forward' },
+      { name: 'Trex', type: 'forward' },
+    ]
+
+    for (const { name, type } of demos) {
+      const filename = name.toLowerCase().replace(/\s/g, '');
+      const url = `viewer.html?obj=${filename}&s=1.0`;
+      const thumbnail = `demos/preview_${filename}.jpg`;
+      const item = `
+        <a class="not-prose no-underline flex flex-col gap-2" href="${url}">
+          <img class="flex-1 rounded-lg bg-slate-200" src="${thumbnail}" />
+          <div class="truncate text-sm sm:text-base">${name}</div>
+        </a>
+      `;
+      containers[type].innerHTML += item;
+    }
+
+  </script>
 </body>
+
 </html>
