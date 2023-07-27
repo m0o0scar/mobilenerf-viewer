@@ -87,12 +87,11 @@
 
     import { OBJLoader } from './js/OBJLoader.js';
     import { GLTFLoader } from './js/GLTFLoader.js';
-    import { VRButton } from './js/VRButton.js';
+    import { VRButton } from './js/VRButton.js?20230727001';
     import { DataUtils } from 'three';
     import { mergeBufferGeometries } from './js/BufferGeometryUtils.js';
 
     import { OrbitControls } from './js/OrbitControls.js';
-
 
     // copied and slightly modified from SNeRG
 
@@ -285,6 +284,8 @@
     let gTotalOBJs = 0;
     let gTotalPNGs = 0;
 
+    let root_object;
+
     let object_rescale = 1.0;
 
     let object_offset_x = 0.0;
@@ -298,6 +299,10 @@
     let foveation = 1.0;
 
     let j9 = 'vec4(viewdir.x, -viewdir.z, viewdir.y, 0.0)'; //switch y-z axes
+
+    // VR controllers
+    let leftController = null;
+    let rightController = null;
 
     const baseUrl = 'https://storage.googleapis.com/jax3d-public/projects/mobilenerf/mobilenerf_viewer_mac/';
 
@@ -386,8 +391,7 @@
       renderer.sortObjects = false;
       container.appendChild(renderer.domElement);
 
-      const vrButton = VRButton.createButton(renderer);
-      document.getElementById('controls').appendChild(vrButton);
+      initXR();
 
       camera = new THREE.PerspectiveCamera(47, 1.0, near_plane * object_rescale, 25 * object_rescale);
       camera.position.copy(cam_pos);
@@ -398,6 +402,9 @@
       controls.screenSpacePanning = true;
 
       scene = new THREE.Scene();
+
+      root_object = new THREE.Object3D();
+      scene.add(root_object);
 
       fetch(baseUrl + obj_name + '_mac/mlp.json').then(response => {
         return response.json();
@@ -464,7 +471,7 @@
             object.position.y = object_offset_y;//*object_rescale;
             object.position.z = object_offset_z;//*object_rescale;
 
-            scene.add(object);
+            root_object.add(object);
           })
         }
 
@@ -472,6 +479,33 @@
         onWindowResize();
         animate();
       });
+    }
+
+    function initXR() {
+      const vrButton = VRButton.createButton(renderer, {
+        onSessionStarted: session => {
+          console.log(`[XR] session started`);
+          session.addEventListener('inputsourceschange', event => {
+            leftController = null;
+            rightController = null;
+            for (const source of event.session.inputSources) {
+              switch (source.handedness) {
+                case 'left': leftController = source; break;
+                case 'right': rightController = source; break;
+                default: break;
+              }
+            }
+          });
+        },
+
+        onSessionEnded: () => {
+          console.log('[XR] session ended');
+          leftController = null;
+          rightController = null;
+        }
+      });
+
+      document.getElementById('controls').appendChild(vrButton);
     }
 
     function onWindowResize() {
@@ -516,6 +550,17 @@
 
       if (!renderer.xr.isPresenting) {
         updateFPSCounter();
+      }
+
+      // XR gamepad mapping
+      // axes[2] => Primary thumbstick X
+      // axes[3] => Primary thumbstick Y
+      // https://github.com/immersive-web/webxr-gamepads-module/blob/main/gamepads-module-explainer.md
+      const [, , rightThumbstickX, rightThumbstickY] = rightController?.gamepad?.axes || [];
+      const movementScale = 0.01;
+      if (rightThumbstickX || rightThumbstickY) {
+        root_object.position.x -= rightThumbstickX * movementScale;
+        root_object.position.z -= rightThumbstickY * movementScale;
       }
     }
 
